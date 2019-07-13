@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="stylesheet" th:href="@{webjars/bootstrap/3.3.7-1/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <title>Deals Summary</title>
+</head>
+<body>
+<nav class="navbar navbar-inverse">
+    <div class="container">
+        <div class="navbar-header">
+            <p class="navbar-brand">Deals Summary</p>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <ul class="nav nav-tabs">
+        <li role="presentation"><a href="/upload">Upload</a></li>
+        <li role="presentation" class="active"><a href="#">Summary</a></li>
+    </ul>
+    <br>
+    <form method="POST" action="/summary">
+        <div class="form-group">
+            <input type="text" th:value="${fileName}" class="form-control" name="fileName" id="fileName" placeholder="File Name"/>
+        </div>
+        <button type="submit" class="btn btn-default">Search</button>
+    </form>
+</div>
+<br/>
+<table class='table' id='summary-table'>
+    <div th:if="${result}">
+        <tr>
+            <th>File Name</th>
+            <th># of Valid Deals</th>
+            <th># of Invalid Deals</th>
+            <th>Process Duration in Milliseconds</th>
+            <th>Timestamp</th>
+
+        </tr>
+        <tr>
+            <td>
+                <div th:text="${result.fileName}"></div>
+            </td>
+            <td>
+                <div th:text="${result.numberOfValidDeails}"></div>
+            </td>
+            <td>
+                <div th:text="${result.numberOfinvalidDeals}"></div>
+            </td>
+            <td>
+                <div th:text="${result.duration}"></div>
+            </td>
+            <td>
+                <div th:text="${#dates.format(result.date, 'dd-MMM-yyyy hh:mm')}"></div>
+            </td>
+        </tr>
+    </div>
+</table>
+</body>
+<script th:src="@{webjars/jquery/1.11.1/jquery.min.js}" type="application/javascript"/>
+
+</html>

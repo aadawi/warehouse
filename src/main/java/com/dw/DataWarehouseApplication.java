@@ -3,7 +3,6 @@ package com.dw;
 import com.dw.configuration.Properties;
 import com.dw.model.CurrencyCode;
 import com.dw.model.Deal;
-import com.dw.service.MongoDBService;
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,20 +20,13 @@ public class DataWarehouseApplication {
 
     private Properties properties;
 
-    private MongoDBService mongoDBService;
+    public static void main(String[] args) {
+        SpringApplication.run(DataWarehouseApplication.class, args);
+    }
 
     @Autowired
     public void setProperties(Properties properties) {
         this.properties = properties;
-    }
-
-    @Autowired
-    public void setMongoDBService(MongoDBService mongoDBService) {
-        this.mongoDBService = mongoDBService;
-    }
-
-    public static void main(String[] args) {
-        SpringApplication.run(DataWarehouseApplication.class, args);
     }
 
     @PostConstruct
@@ -59,7 +51,7 @@ public class DataWarehouseApplication {
             deal.setFromCurrency(currencyCodeList.get(uuidHashCodeFirstDigit).name());
             deal.setToCurrency(currencyCodeList.get(uuidHashCodeStrLastDigit).name());
             deal.setTimestamp(new Date().getTime() + "");
-            if (i/(System.nanoTime()/10000000000l) == 0) {
+            if (i / (System.nanoTime() / 10000000000l) == 0) {
                 deal.setToCurrency("");
                 deal.setTimestamp("Time");
             }

@@ -13,4 +13,7 @@ public class Properties {
 
     @Value("${test.date.csv.file.path.name}")
     private String testDateFilePath;
+
+    @Value("${number.of.threads:5}")
+    private int numberOfThreads;
 }

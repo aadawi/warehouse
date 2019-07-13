@@ -1,6 +1,5 @@
 package com.dw.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.data.mongodb.core.mapping.Document;
 

@@ -2,8 +2,10 @@ package com.dw.service;
 
 import com.dw.configuration.Properties;
 import com.dw.exception.BusinessException;
+import com.dw.model.DealsFileSummary;
 import com.dw.model.InvalidDeal;
 import com.dw.model.ValidDeal;
+import com.dw.repository.DealsFileSummaryRepository;
 import com.dw.util.CsvFileValidator;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -18,13 +20,14 @@ import java.io.Reader;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Component
-public class CSVFileService {
+public class CSVFileService implements FileProcessor {
 
     Logger LOGGER = LogManager.getLogger(CSVFileService.class);
 
@@ -47,6 +50,12 @@ public class CSVFileService {
         this.csvFileValidator = csvFileValidator;
     }
 
+    /**
+     * Process File
+     *
+     * @param file MultiPart FIle
+     * @return Message
+     */
     public String processFile(MultipartFile file) {
         Instant start = Instant.now();
 
@@ -57,9 +66,8 @@ public class CSVFileService {
         AtomicInteger numberOfInvalidDeals = new AtomicInteger();
 
         Reader reader = null;
-
+        String fileName = file.getOriginalFilename();
         try {
-            String fileName = file.getOriginalFilename();
 
             if (mongoDBService.isFileImported(fileName)) {
                 throw new BusinessException("CSV file already imported");
@@ -117,7 +125,20 @@ public class CSVFileService {
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
 
-        return ("Time to finish:" + (timeElapsed / 1000) + " seconds, Number of valid deals:" + numberOfValidDeals.get() + " Number of invalid Deals:" + numberOfInvalidDeals.get());
+        saveDealsFileSummary(numberOfValidDeals, numberOfInvalidDeals, fileName, timeElapsed);
+
+        return ("Time to finish:" + (timeElapsed ) + " Millisecond, Number of valid deals:" + numberOfValidDeals.get() + " Number of invalid Deals:" + numberOfInvalidDeals.get());
+    }
+
+    private void saveDealsFileSummary(AtomicInteger numberOfValidDeals, AtomicInteger numberOfInvalidDeals, String fileName, long timeElapsed) {
+        DealsFileSummary dealsFileSummary = new DealsFileSummary();
+        dealsFileSummary.setDate(new Date());
+        dealsFileSummary.setDuration(timeElapsed);
+        dealsFileSummary.setFileName(fileName);
+        dealsFileSummary.setNumberOfinvalidDeals(numberOfInvalidDeals.get());
+        dealsFileSummary.setNumberOfValidDeails(numberOfValidDeals.get());
+        mongoDBService.saveDealsFileSummary(dealsFileSummary);
+
     }
 
     private void validateAfterListsFinish(List<InvalidDeal> invalidDealList, List<ValidDeal> validDealList) {

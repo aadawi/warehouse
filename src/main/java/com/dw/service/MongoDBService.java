@@ -1,9 +1,12 @@
 package com.dw.service;
 
+import com.dw.configuration.Properties;
 import com.dw.model.AccumulativeDeal;
+import com.dw.model.DealsFileSummary;
 import com.dw.model.InvalidDeal;
 import com.dw.model.ValidDeal;
 import com.dw.repository.AccumulativeDealRepository;
+import com.dw.repository.DealsFileSummaryRepository;
 import com.dw.repository.InvalidDealRepository;
 import com.dw.repository.ValidDealRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,13 +22,29 @@ import java.util.stream.Collectors;
 @Component
 public class MongoDBService {
 
-    private ExecutorService executor = Executors.newFixedThreadPool(5);
+    private ExecutorService executor;
 
     private ValidDealRepository validDealRepository;
 
     private InvalidDealRepository invalidDealRepository;
 
     private AccumulativeDealRepository accumulativeDealRepository;
+
+    private DealsFileSummaryRepository dealsFileSummaryRepository;
+
+    private Properties properties;
+
+
+    @Autowired
+    public MongoDBService(Properties properties) {
+        this.properties = properties;
+        executor = Executors.newFixedThreadPool(properties.getNumberOfThreads());
+    }
+
+    @Autowired
+    public void setDealsFileSummaryRepository(DealsFileSummaryRepository dealsFileSummaryRepository) {
+        this.dealsFileSummaryRepository = dealsFileSummaryRepository;
+    }
 
     @Autowired
     public void setAccumulativeDealRepository(AccumulativeDealRepository accumulativeDealRepository) {
@@ -46,7 +65,7 @@ public class MongoDBService {
         List<ValidDeal> deals = new ArrayList<>();
         deals.addAll(dealsList);
         dealsList.clear();
-        executor.execute(() ->{
+        executor.execute(() -> {
             validDealRepository.saveAll(deals);
         });
     }
@@ -55,7 +74,7 @@ public class MongoDBService {
         List<InvalidDeal> deals = new ArrayList<>();
         deals.addAll(dealsList);
         dealsList.clear();
-        executor.execute(() ->{
+        executor.execute(() -> {
             invalidDealRepository.saveAll(deals);
         });
     }
@@ -69,32 +88,44 @@ public class MongoDBService {
         if (validDealRepository.countByFileName(fileName) != 0) {
             return true;
         }
-        if (validDealRepository.countByFileName(fileName) != 0){
+        if (validDealRepository.countByFileName(fileName) != 0) {
             return true;
         }
         return false;
     }
 
-    public void addAndUpdateAccumulativeDealsCount(Map<String, Long> currencyCodeMap){
-        List<AccumulativeDeal> accumulativeDealList = accumulativeDealRepository.findAll();
+    public void addAndUpdateAccumulativeDealsCount(Map<String, Long> currencyCodeMap) {
+        executor.execute(() -> {
+            List<AccumulativeDeal> accumulativeDealList = accumulativeDealRepository.findAll();
 
-        accumulativeDealList.forEach(accumulativeDeal -> {
-            Long newDealsCount = currencyCodeMap.get(accumulativeDeal.getCurrencyCode());
-            if (newDealsCount != null) {
-                accumulativeDeal.setDealsCount(accumulativeDeal.getDealsCount()+newDealsCount);
-                currencyCodeMap.remove(accumulativeDeal.getCurrencyCode());
-            }
-        });
-        if (!currencyCodeMap.isEmpty()) {
-            List<AccumulativeDeal> newAccumulativeDealList = currencyCodeMap.entrySet().stream().map(entry ->
+            accumulativeDealList.forEach(accumulativeDeal -> {
+                Long newDealsCount = currencyCodeMap.get(accumulativeDeal.getCurrencyCode());
+                if (newDealsCount != null) {
+                    accumulativeDeal.setDealsCount(accumulativeDeal.getDealsCount() + newDealsCount);
+                    currencyCodeMap.remove(accumulativeDeal.getCurrencyCode());
+                }
+            });
+            if (!currencyCodeMap.isEmpty()) {
+                List<AccumulativeDeal> newAccumulativeDealList = currencyCodeMap.entrySet().stream().map(entry ->
                     new AccumulativeDeal(entry.getKey(), entry.getValue())).collect(Collectors.toList());
-            accumulativeDealList.addAll(newAccumulativeDealList);
-        }
+                accumulativeDealList.addAll(newAccumulativeDealList);
+            }
 
-        accumulativeDealRepository.saveAll(accumulativeDealList);
+            accumulativeDealRepository.saveAll(accumulativeDealList);
+        });
     }
 
-    public void deleteByFileName(String fileName){
+    public void saveDealsFileSummary(DealsFileSummary dealsFileSummary) {
+        executor.execute(() -> {
+            dealsFileSummaryRepository.save(dealsFileSummary);
+        });
+    }
+
+    public DealsFileSummary getFileSummaryByFileName(String fileName) {
+        return dealsFileSummaryRepository.getByFileName(fileName);
+    }
+
+    public void deleteByFileName(String fileName) {
         invalidDealRepository.deleteByFileName(fileName);
         validDealRepository.deleteByFileName(fileName);
     }
