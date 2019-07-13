@@ -1,8 +1,8 @@
 package com.dw;
 
+import com.dw.configuration.Properties;
 import com.dw.model.CurrencyCode;
 import com.dw.model.Deal;
-import com.dw.model.Test;
 import com.dw.service.MongoDBService;
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
@@ -19,8 +19,19 @@ import java.util.concurrent.ThreadLocalRandom;
 @SpringBootApplication
 public class DataWarehouseApplication {
 
+    private Properties properties;
+
+    private MongoDBService mongoDBService;
+
     @Autowired
-    MongoDBService mongoDBService;
+    public void setProperties(Properties properties) {
+        this.properties = properties;
+    }
+
+    @Autowired
+    public void setMongoDBService(MongoDBService mongoDBService) {
+        this.mongoDBService = mongoDBService;
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(DataWarehouseApplication.class, args);
@@ -30,7 +41,6 @@ public class DataWarehouseApplication {
     private void generateTestData() {
 
         List<Deal> dealList = new ArrayList();
-        mongoDBService.deleteAll();
         CurrencyCode currencyCode[] = CurrencyCode.values();
         List<CurrencyCode> currencyCodeList = Arrays.asList(currencyCode);
         for (int i = 0; i < 110000; i++) {
@@ -57,7 +67,7 @@ public class DataWarehouseApplication {
         }
 
         try {
-            Writer writer = new FileWriter("/home/user/Desktop/yourfile.csv");
+            Writer writer = new FileWriter(properties.getTestDateFilePath());
             StatefulBeanToCsv beanToCsv = new StatefulBeanToCsvBuilder(writer).withApplyQuotesToAll(false).build();
             beanToCsv.write(dealList);
         } catch (Exception e) {

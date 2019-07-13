@@ -10,4 +10,7 @@ public class Properties {
 
     @Value("${batch.size:1000}")
     private Long batchSize;
+
+    @Value("${test.date.csv.file.path.name}")
+    private String testDateFilePath;
 }

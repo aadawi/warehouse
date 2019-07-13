@@ -6,5 +6,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ValidDealRepository extends MongoRepository<ValidDeal, String> {
+
     Long countByFileName(String fileName);
+
+    void deleteByFileName(String fileName);
 }

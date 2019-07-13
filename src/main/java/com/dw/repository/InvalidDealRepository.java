@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface InvalidDealRepository extends MongoRepository<InvalidDeal, String> {
     Long countByFileName(String fileName);
+    void deleteByFileName(String fileName);
+
 }

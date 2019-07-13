@@ -5,7 +5,6 @@ import com.dw.exception.BusinessException;
 import com.dw.model.InvalidDeal;
 import com.dw.model.ValidDeal;
 import com.dw.util.CsvFileValidator;
-import com.opencsv.bean.CsvToBeanBuilder;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -14,14 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Component
 public class CSVFileService {
@@ -36,10 +36,12 @@ public class CSVFileService {
     public void setProperties(Properties properties) {
         this.properties = properties;
     }
+
     @Autowired
     public void setMongoDBService(MongoDBService mongoDBService) {
         this.mongoDBService = mongoDBService;
     }
+
     @Autowired
     public void setCsvFileValidator(CsvFileValidator csvFileValidator) {
         this.csvFileValidator = csvFileValidator;
@@ -59,7 +61,7 @@ public class CSVFileService {
         try {
             String fileName = file.getOriginalFilename();
 
-            if (mongoDBService.isFileImported(fileName)){
+            if (mongoDBService.isFileImported(fileName)) {
                 throw new BusinessException("CSV file already imported");
             }
 
@@ -75,6 +77,13 @@ public class CSVFileService {
 
                 if (validDealList.size() > properties.getBatchSize()) {
                     numberOfValidDeals.addAndGet(validDealList.size());
+
+                    Map<String, Long> accumulativeDealsMap =
+                        validDealList.stream().collect(
+                            Collectors.groupingBy(deal -> deal.getFromCurrency(), Collectors.counting()
+                            )
+                        );
+                    mongoDBService.addAndUpdateAccumulativeDealsCount(accumulativeDealsMap);
                     mongoDBService.saveAllValidDeals(validDealList);
                 }
                 if (invalidDealList.size() > properties.getBatchSize()) {
@@ -108,7 +117,7 @@ public class CSVFileService {
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
 
-        return ("Time to finish:" + timeElapsed / 100 + " seconds, Number of valid deals:" + numberOfValidDeals.get() + " Number of invalid Deals:" + numberOfInvalidDeals.get());
+        return ("Time to finish:" + (timeElapsed / 1000) + " seconds, Number of valid deals:" + numberOfValidDeals.get() + " Number of invalid Deals:" + numberOfInvalidDeals.get());
     }
 
     private void validateAfterListsFinish(List<InvalidDeal> invalidDealList, List<ValidDeal> validDealList) {
