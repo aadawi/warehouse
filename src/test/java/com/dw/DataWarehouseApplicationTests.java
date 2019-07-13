@@ -41,13 +41,13 @@ public class DataWarehouseApplicationTests {
                 "text/plain", Files.readAllBytes(file.toPath()));
 
             // success scenario
-            MvcResult result = mvc.perform(MockMvcRequestBuilders.fileUpload("/").file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)).andReturn();
+            MvcResult result = mvc.perform(MockMvcRequestBuilders.fileUpload("/upload").file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)).andReturn();
 
             Assert.assertNotNull(result.getFlashMap().get("message"));
             Assert.assertNull(result.getFlashMap().get("errorMessage"));
 
             // insert the same file again (Failed scenario)
-            result = mvc.perform(MockMvcRequestBuilders.fileUpload("/").file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)).andReturn();
+            result = mvc.perform(MockMvcRequestBuilders.fileUpload("/upload").file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)).andReturn();
 
             Assert.assertNull(result.getFlashMap().get("message"));
             Assert.assertNotNull(result.getFlashMap().get("errorMessage"));

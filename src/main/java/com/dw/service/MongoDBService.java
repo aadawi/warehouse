@@ -1,6 +1,7 @@
 package com.dw.service;
 
 import com.dw.configuration.Properties;
+import com.dw.exception.BusinessException;
 import com.dw.model.AccumulativeDeal;
 import com.dw.model.DealsFileSummary;
 import com.dw.model.InvalidDeal;
@@ -9,6 +10,7 @@ import com.dw.repository.AccumulativeDealRepository;
 import com.dw.repository.DealsFileSummaryRepository;
 import com.dw.repository.InvalidDealRepository;
 import com.dw.repository.ValidDealRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -122,6 +124,9 @@ public class MongoDBService {
     }
 
     public DealsFileSummary getFileSummaryByFileName(String fileName) {
+        if (StringUtils.isBlank(fileName)) {
+            throw new BusinessException("Please enter file name ");
+        }
         return dealsFileSummaryRepository.getByFileName(fileName);
     }
 

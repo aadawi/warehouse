@@ -93,10 +93,16 @@ public class CSVFileService implements FileProcessor {
                         );
                     mongoDBService.addAndUpdateAccumulativeDealsCount(accumulativeDealsMap);
                     mongoDBService.saveAllValidDeals(validDealList);
+
+                    saveDealsFileSummary(numberOfValidDeals, numberOfInvalidDeals, fileName, start);
+
                 }
                 if (invalidDealList.size() > properties.getBatchSize()) {
                     numberOfInvalidDeals.addAndGet(invalidDealList.size());
                     mongoDBService.saveAllInvalidDeals(invalidDealList);
+
+                    saveDealsFileSummary(numberOfValidDeals, numberOfInvalidDeals, fileName, start);
+
                 }
             });
         } catch (BusinessException e) {
@@ -122,15 +128,20 @@ public class CSVFileService implements FileProcessor {
 
         validateAfterListsFinish(invalidDealList, validDealList);
 
+
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
 
-        saveDealsFileSummary(numberOfValidDeals, numberOfInvalidDeals, fileName, timeElapsed);
+        saveDealsFileSummary(numberOfValidDeals, numberOfInvalidDeals, fileName, start);
 
-        return ("Time to finish:" + (timeElapsed ) + " Millisecond, Number of valid deals:" + numberOfValidDeals.get() + " Number of invalid Deals:" + numberOfInvalidDeals.get());
+        return ("Time to finish processing:" + (timeElapsed ) + " Millisecond, Number of valid deals:" + numberOfValidDeals.get() + " Number of invalid Deals:" + numberOfInvalidDeals.get());
     }
 
-    private void saveDealsFileSummary(AtomicInteger numberOfValidDeals, AtomicInteger numberOfInvalidDeals, String fileName, long timeElapsed) {
+    private void saveDealsFileSummary(AtomicInteger numberOfValidDeals, AtomicInteger numberOfInvalidDeals, String fileName, Instant start) {
+
+        Instant finish = Instant.now();
+        long timeElapsed = Duration.between(start, finish).toMillis();
+
         DealsFileSummary dealsFileSummary = new DealsFileSummary();
         dealsFileSummary.setDate(new Date());
         dealsFileSummary.setDuration(timeElapsed);

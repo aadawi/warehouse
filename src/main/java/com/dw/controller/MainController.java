@@ -59,9 +59,18 @@ public class MainController {
     @PostMapping("/summary")
     public String getSummary(@RequestParam("fileName") String fileName,
                              RedirectAttributes redirectAttributes) throws IOException {
-        DealsFileSummary dealsFileSummary = mongoDBService.getFileSummaryByFileName(fileName);
-        redirectAttributes.addFlashAttribute("result",dealsFileSummary);
-        redirectAttributes.addFlashAttribute("fileName",fileName);
+        try {
+
+            DealsFileSummary dealsFileSummary = mongoDBService.getFileSummaryByFileName(fileName);
+            redirectAttributes.addFlashAttribute("result", dealsFileSummary);
+            redirectAttributes.addFlashAttribute("fileName", fileName);
+            if (dealsFileSummary == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "File not found: " + fileName);
+                redirectAttributes.addFlashAttribute("fileName", null);
+            }
+        } catch (BusinessException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/summary";
     }
 }
