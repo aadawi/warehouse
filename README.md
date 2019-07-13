@@ -12,3 +12,7 @@ java -jar
 * in case you want to generate Docker image use below:
 sudo mvn package
 sudo mvn docker:build 
+
+#Jacoco
+*check below path for code coverage
+/target/site/jacoco/index.html 
